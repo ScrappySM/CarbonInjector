@@ -60,13 +60,13 @@ jobs:
 
       - name: List x64/Release directory contents
         run: |
-          echo "Listing x64/Release directory:"
-          dir x64/Release
+          echo Listing x64/Release directory:
+          dir x64\Release
         shell: cmd
 
       - name: List workspace directory contents
         run: |
-          echo "Listing workspace root directory:"
+          echo Listing workspace root directory:
           dir
         shell: cmd
 
