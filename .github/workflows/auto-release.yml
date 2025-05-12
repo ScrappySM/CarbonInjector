@@ -57,7 +57,6 @@ jobs:
           prerelease: false
           files: |
             x64/Release/CarbonInjector.dll
-            x64/Release/CarbonInjector.pdb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -77,6 +76,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CarbonInjector-Release-x64
-          path: |
-            x64/Release/CarbonInjector.dll
-            x64/Release/*.pdb
+          path: x64/Release/CarbonInjector.dll
