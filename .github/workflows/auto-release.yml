@@ -1,0 +1,66 @@
+name: Auto Tag, Release, and Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up cache for build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ccache
+            build/
+          key: ${{ runner.os }}-ccache-${{ hashFiles('**/*.cpp', '**/*.h', '**/*.vcxproj', '**/*.sln') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build ccache
+
+      - name: Configure and build (Debug)
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug -G Ninja ..
+          cmake --build .
+
+      - name: Get short SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        id: tag
+        run: |
+          TAG_NAME=ci-${{ steps.vars.outputs.sha_short }}
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          name: Release ${{ steps.tag.outputs.tag_name }}
+          body: "Automated release for commit ${{ steps.vars.outputs.sha_short }}."
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-debug
+          path: build/
